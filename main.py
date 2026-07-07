@@ -87,11 +87,66 @@ def login():
             session['user_id'] = user[0]
             session['username'] = username
             return redirect('/')
-        else:
-            return render_template('login.html', error="Неверное имя пользователя или пароль.")
+        
+    return render_template('login.html', error="Неверное имя пользователя или пароль.")
 
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect('/login')
+
+@app.route('/tasks')
+def tasks():
+    if 'username' not in session:
+        return redirect('/login')
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM tasks ORDER BY created_at DESC')
+    tasks = cursor.fetchall()
+    conn.close()
+    return render_template('tasks.html', tasks=tasks)
+
+@app.route('/take_task/<int:task_id>', methods=['POST'])
+def take_task(task_id):
+    if 'username' not in session:
+        return redirect('/login')
+    
+    username = session['username']
+
+
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('''
+        UPDATE tasks SET status='В процессе', assignee=? WHERE id=?
+    ''', (username, task_id))
+    conn.commit()
+    conn.close()
+
+    return redirect('/tasks')
+
+@app.route('/complete_task/<int:task_id>', methods=['POST'])
+def complete_task(task_id):
+    if 'username' not in session:
+        return redirect('/login')
+
+    result_file = request.files.get('result_file')
+    filename = None
+    if result_file and result_file.filename != '':
+        os.makedirs('app/uploads', exist_ok=True)
+        from werkzeug.utils import secure_filename
+        filename = f"{task_id}-{secure_filename(result_file.filename)}" 
+        result_file.save(os.path.join('app/uploads', filename))
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    if filename:
+        cursor.execute('''
+            UPDATE tasks SET status='Выполнено', result_file=? WHERE id=?
+        ''', (filename, task_id))
+
+    conn.commit()
+    conn.close()
+
+    return redirect('/tasks')
 app.run(debug=True, host="0.0.0.0", port=5000)

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Доска задач</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='tasks.css') }}">
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="sidebar">
+        <h2>Свежие задачи</h2>
+        {% for task in tasks %}
+            <div class="task-item" onclick="openTask('{{ task[0] }}')">
+                <div class="task-title">#{{ task[0] }} {{ task[1] }}</div>
+                <div class="task-status">Статус: {{ task[3] }}</div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="content">
+        <div id="placeholder" class="placeholder">
+            <h2>Выберите задачу из списка слева, чтобы увидеть подробности</h2>
+        </div>
+
+        {% for task in tasks %}
+            <div id="task-{{ task[0] }}" class="task-detail">
+                <h2>{{ task[1] }}</h2>
+                <hr>
+                <p><strong>Описание:</strong><br> {{ task[2] }}</p>
+                <p><strong>Статус:</strong> {{ task[3] }}</p>
+                <p><strong>Исполнитель:</strong> {{ task[4] if task[4] else 'Пока никто не взял' }}</p>
+                
+                {% if task[3] == 'Не выполнено' %}
+                    <div class="form-group">
+                        <form action="/take_task/{{ task[0] }}" method="POST">
+                            <button type="submit" class="btn">Взять в работу</button>
+                        </form>
+                    </div>
+                {% elif task[3] == 'В процессе' %}
+                    <div class="form-group">
+                        <form action="/complete_task/{{ task[0] }}" method="POST" enctype="multipart/form-data">
+                            <label>Прикрепить файл с результатом:</label><br><br>
+                            <input type="file" name="result_file" required><br><br>
+                            <button type="submit" class="btn">Завершить задачу</button>
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='tasks.js') }}"></script>
+
+</body>
+</html>
