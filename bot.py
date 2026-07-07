@@ -26,6 +26,7 @@ def help_command(message):
         "/add — Создать новую задачу\n"
         "/list — Полный список всех задач\n"
         "/status — Посмотреть общую статистику (статусы)\n"
+        "/delete — Удалить задачу\n"
         "/help — Показать это меню"
     )
     bot.reply_to(message, help_text, parse_mode='Markdown')
@@ -95,6 +96,25 @@ def task_status(message):
         response += f"{title} - [{status}]\n"
         
     bot.reply_to(message, response, parse_mode='Markdown')
+
+@bot.message_handler(commands=['delete'])
+def delete_task(message):
+    msg = bot.reply_to(message, "Введите ID задачи, которую хотите удалить:")
+    bot.register_next_step_handler(msg, process_delete_step)
+
+def process_delete_step(message):
+    task_id = message.text.strip()
+    if not task_id.isdigit():
+        bot.reply_to(message, "ID задачи должен быть числом. Попробуйте снова.")
+        return
+    
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM tasks WHERE id = ?', (int(task_id),))
+    conn.commit()
+    conn.close()
+
+    bot.reply_to(message, f"Задача с ID {task_id} успешно удалена.", parse_mode='Markdown')
 
 if __name__ == '__main__':
     print("Бот запущен")
