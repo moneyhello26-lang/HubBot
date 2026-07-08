@@ -1,18 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registration</title>
+    <title>Регистрация - HubBot</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
 </head>
 <body>
-    <form method="POST">
-        <input type="text" name="username" placeholder="Username" required>
-        <input type="password" name="password" placeholder="Password" required>
-        <button type="submit">Register</button>
-    </form>
-    {% if error %}
-        <p style="color: red;">{{ error }}</p>
-    {% endif %}
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="logo">HubBot</div>
+            <h2>Создать аккаунт</h2>
+            <p class="subtitle">Начните эффективно управлять задачами</p>
+
+            {% if error %}
+                <div class="error-msg">{{ error }}</div>
+            {% endif %}
+
+            <form action="/register" method="POST">
+                <div class="input-group">
+                    <label>Придумайте логин</label>
+                    <input type="text" name="username" required placeholder="Например, Ivan">
+                </div>
+                
+                <div class="input-group">
+                    <label>Придумайте пароль</label>
+                    <input type="password" name="password" required placeholder="Не менее 6 символов">
+                </div>
+                
+                <button type="submit" class="auth-btn">Зарегистрироваться</button>
+            </form>
+            
+            <p class="switch-auth">Уже есть аккаунт? <a href="/login">Войти</a></p>
+            <p class="switch-auth" style="margin-top: 10px;"><a href="/" style="color: #64748b; font-weight: 400;">Вернуться на главную</a></p>
+        </div>
+    </div>
 </body>
 </html>

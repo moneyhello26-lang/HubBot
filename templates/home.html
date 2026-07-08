@@ -1,11 +1,39 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home page</title>
+    <title>HubBot - Система делегирования задач</title>
+    <!-- Подключаем красивый шрифт Inter от Google -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='landing.css') }}">
 </head>
 <body>
-    
+    <nav class="navbar">
+        <div class="logo">HubBot</div>
+        <div class="nav-links">
+            {% if 'username' in session %}
+                <a href="/tasks" class="btn-primary">Мои задачи</a>
+                <a href="/settings" class="btn-outline">Настройки</a>
+                <a href="/logout" class="btn-danger">Выйти</a>
+            {% else %}
+                <a href="/login" class="btn-outline">Вход</a>
+                <a href="/register" class="btn-primary">Регистрация</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="hero-content">
+            <h1>Управляйте задачами<br> <span class="highlight">быстро и легко</span></h1>
+            <p>Платформа для эффективного делегирования и контроля. Оставьте хаос позади.</p>
+            {% if 'username' in session %}
+                <a href="/tasks" class="cta-button">Перейти к задачам</a>
+            {% else %}
+                <a href="/register" class="cta-button">Начать бесплатно</a>
+            {% endif %}
+        </div>
+        <!-- Декоративное свечение на фоне -->
+        <div class="hero-bg-glow"></div>
+    </header>
 </body>
 </html>

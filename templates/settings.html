@@ -1,11 +1,56 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings</title>
+    <title>Настройки профиля</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='settings.css') }}">
 </head>
 <body>
+
+<div class="settings-container">
+    <h2>Настройки профиля</h2>
     
+    <div class="tabs">
+        <button class="tab-link active" type="button" onclick="openTab(event, 'Personal')">Личные данные</button>
+        <button class="tab-link" type="button" onclick="openTab(event, 'Social')">Социальные сети</button>
+    </div>
+
+    <form action="/settings" method="POST" enctype="multipart/form-data">
+        
+        <div id="Personal" class="tab-content" style="display: block;">
+            <div class="form-group">
+                <label>Текущая аватарка:</label><br>
+                <img src="{{ url_for('static', filename='avatars/' + user[1]) }}" alt="Аватар" class="avatar-preview" onerror="this.src='https://via.placeholder.com/100?text=Avatar'">
+            </div>
+            
+            <div class="form-group">
+                <label>Загрузить новую аватарку:</label>
+                <input type="file" name="avatar" accept="image/*">
+            </div>
+
+            <div class="form-group">
+                <label>Обо мне:</label>
+                <textarea name="about_me" rows="4" placeholder="Напишите пару слов о себе...">{{ user[2] if user[2] else '' }}</textarea>
+            </div>
+        </div>
+
+        <div id="Social" class="tab-content">
+            <div class="form-group">
+                <label>Ссылка на GitHub:</label>
+                <input type="url" name="github_link" value="{{ user[3] if user[3] else '' }}" placeholder="https://github.com/ВашЛогин">
+            </div>
+            
+            <div class="form-group">
+                <label>Ссылка на LinkedIn:</label>
+                <input type="url" name="linkedin_link" value="{{ user[4] if user[4] else '' }}" placeholder="https://linkedin.com/in/ВашЛогин">
+            </div>
+        </div>
+
+        <button type="submit" class="save-btn">Сохранить изменения</button>
+        <a href="/tasks" class="back-link">Вернуться к доске задач</a>
+    </form>
+</div>
+
+<script src="{{ url_for('static', filename='settings.js') }}"></script>
 </body>
 </html>

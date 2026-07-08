@@ -149,4 +149,49 @@ def complete_task(task_id):
     conn.close()
 
     return redirect('/tasks')
+
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    if 'user_id' not in session:
+        return redirect('/login')
+
+    user_id = session['user_id']
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    if request.method == 'POST':
+        about_me = request.form.get('about_me', '')
+        github_link = request.form.get('github_link', '')
+        linkedin_link = request.form.get('linkedin_link', '')
+
+        avatar = request.files.get('avatar')
+        avatar_filename = None
+        
+        if avatar and avatar.filename != '':
+            os.makedirs('static/avatars', exist_ok=True)
+            from werkzeug.utils import secure_filename
+            filename = secure_filename(avatar.filename)
+            avatar_filename = f"user_{user_id}_{filename}"
+            avatar.save(os.path.join('static/avatars', avatar_filename))
+
+        if avatar_filename:
+            cursor.execute('''
+                UPDATE users SET about_me=?, github_link=?, linkedin_link=?, avatar_file=?
+                WHERE id=?
+            ''', (about_me, github_link, linkedin_link, avatar_filename, user_id))
+        else:
+            cursor.execute('''
+                UPDATE users SET about_me=?, github_link=?, linkedin_link=?
+                WHERE id=?
+            ''', (about_me, github_link, linkedin_link, user_id))
+
+        conn.commit()
+        conn.close()
+        return redirect('/settings')
+
+    cursor.execute('SELECT username, avatar_file, about_me, github_link, linkedin_link FROM users WHERE id = ?', (user_id,))
+    user_data = cursor.fetchone()
+    conn.close()
+    return render_template('settings.html', user=user_data)
+
 app.run(debug=True, host="0.0.0.0", port=5000)

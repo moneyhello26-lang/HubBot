@@ -1,0 +1,68 @@
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #f4f5f7; 
+    margin: 0; 
+    padding: 40px; 
+    color: #172b4d;
+}
+.settings-container { 
+    max-width: 600px; 
+    margin: 0 auto; 
+    background: #ffffff; 
+    padding: 32px; 
+    border-radius: 3px; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+    border: 1px solid #dfe1e6;
+}
+h2 { color: #172b4d; margin-top: 0; font-size: 24px; }
+
+.tabs { display: flex; border-bottom: 2px solid #dfe1e6; margin-bottom: 24px; }
+.tab-link { 
+    flex: 1; 
+    padding: 12px; 
+    background: none; 
+    border: none; 
+    cursor: pointer; 
+    font-size: 14px; 
+    color: #5e6c84; 
+    font-weight: 500;
+}
+.tab-link:hover { color: #0052cc; background: #fafbfc; }
+.tab-link.active { border-bottom: 2px solid #0052cc; color: #0052cc; font-weight: 600; margin-bottom: -2px; }
+
+.tab-content { display: none; }
+
+.form-group { margin-bottom: 20px; }
+label { display: block; font-weight: 600; margin-bottom: 4px; color: #5e6c84; font-size: 12px; }
+input[type="url"], input[type="file"], textarea { 
+    width: 100%; 
+    padding: 8px 12px; 
+    border: 2px solid #dfe1e6; 
+    border-radius: 3px; 
+    box-sizing: border-box; 
+    background: #fafbfc;
+    font-family: inherit;
+    font-size: 14px;
+}
+input:focus, textarea:focus {
+    outline: none;
+    border-color: #4c9aff;
+    background: #ffffff;
+}
+.avatar-preview { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 1px solid #dfe1e6; }
+
+.save-btn { 
+    width: 100%; 
+    padding: 10px; 
+    background: #0052cc; 
+    color: white; 
+    border: none; 
+    border-radius: 3px; 
+    font-size: 14px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    margin-top: 16px; 
+}
+.save-btn:hover { background: #0047b3; }
+.back-link { display: block; text-align: center; margin-top: 20px; text-decoration: none; color: #0052cc; font-size: 14px;}
+.back-link:hover { text-decoration: underline; }
