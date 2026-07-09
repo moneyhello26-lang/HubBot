@@ -65,7 +65,10 @@ def task_cleaner_thread():
                 
                 chat_id = get_manager_chat_id()
                 if chat_id:
-                    bot.send_message(chat_id, f"🗑 Задача #{t_id} «{title}» была автоматически удалена (просрочен дедлайн на {dl_type}).")
+                    try:
+                        bot.send_message(chat_id, f"🗑 Задача #{t_id} «{title}» была автоматически удалена (просрочен дедлайн на {dl_type}).")
+                    except Exception as e:
+                        print(f"Failed to send notification: {e}")
             
             conn.commit()
             conn.close()
