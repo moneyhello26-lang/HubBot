@@ -1,6 +1,9 @@
 import telebot
 import sqlite3
 import os
+import time
+import threading
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,6 +17,65 @@ bot = telebot.TeleBot(BOT_TOKEN)
 DB_PATH = 'data/taskmanager.db'
 
 user_data = {}
+
+def get_manager_chat_id():
+    try:
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/getUpdates"
+        import requests
+        resp = requests.get(url).json()
+        if resp.get("ok") and resp.get("result"):
+            return str(resp["result"][-1]["message"]["chat"]["id"])
+    except:
+        pass
+    return None
+
+def task_cleaner_thread():
+    """Background thread to delete expired tasks every minute."""
+    while True:
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            
+            cursor.execute('SELECT id, title, status, accept_deadline, completion_deadline FROM tasks')
+            tasks = cursor.fetchall()
+            
+            now = datetime.now()
+            expired_ids = []
+            
+            for task in tasks:
+                t_id, title, status, accept_dl, comp_dl = task
+                if status == 'Не выполнено' and accept_dl:
+                    try:
+                        dt = datetime.strptime(accept_dl, '%Y-%m-%d %H:%M')
+                        if now > dt:
+                            expired_ids.append((t_id, title, "принятие"))
+                    except ValueError:
+                        pass
+                elif status == 'В процессе' and comp_dl:
+                    try:
+                        dt = datetime.strptime(comp_dl, '%Y-%m-%d %H:%M')
+                        if now > dt:
+                            expired_ids.append((t_id, title, "выполнение"))
+                    except ValueError:
+                        pass
+                        
+            for t_id, title, dl_type in expired_ids:
+                cursor.execute('DELETE FROM tasks WHERE id = ?', (t_id,))
+                print(f"Deleted task #{t_id} (expired {dl_type} deadline)")
+                
+                chat_id = get_manager_chat_id()
+                if chat_id:
+                    bot.send_message(chat_id, f"🗑 Задача #{t_id} «{title}» была автоматически удалена (просрочен дедлайн на {dl_type}).")
+            
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            print(f"Cleaner thread error: {e}")
+            
+        time.sleep(60)
+cleaner = threading.Thread(target=task_cleaner_thread, daemon=True)
+cleaner.start()
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -45,20 +107,50 @@ def process_title_step(message):
 
 def process_description_step(message):
     chat_id = message.chat.id
-    description = message.text
-    title = user_data[chat_id]['title']
+    user_data[chat_id]['description'] = message.text
 
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    cursor.execute('''
-        INSERT INTO tasks (title, description) 
-        VALUES (?, ?)
-    ''', (title, description))
-    conn.commit()
-    conn.close()
+    msg = bot.reply_to(message, "Введите дедлайн на ПРИНЯТИЕ задачи (например: 2026-07-10 15:00):", parse_mode='Markdown')
+    bot.register_next_step_handler(msg, process_accept_deadline_step)
 
-    bot.reply_to(message, f"Задача успешно добавлена!\n\n {title}:\n {description}", parse_mode='Markdown')
-    user_data.pop(chat_id, None)
+def process_accept_deadline_step(message):
+    chat_id = message.chat.id
+    accept_dl = message.text.strip()
+    
+    try:
+        datetime.strptime(accept_dl, '%Y-%m-%d %H:%M')
+        user_data[chat_id]['accept_deadline'] = accept_dl
+        
+        msg = bot.reply_to(message, "Введите дедлайн на ВЫПОЛНЕНИЕ задачи (например: 2026-07-15 18:00):", parse_mode='Markdown')
+        bot.register_next_step_handler(msg, process_completion_deadline_step)
+    except ValueError:
+        msg = bot.reply_to(message, "Неверный формат даты. Пожалуйста, введите в формате ГГГГ-ММ-ДД ЧЧ:ММ (например: 2026-07-10 15:00):")
+        bot.register_next_step_handler(msg, process_accept_deadline_step)
+
+def process_completion_deadline_step(message):
+    chat_id = message.chat.id
+    comp_dl = message.text.strip()
+    
+    try:
+        datetime.strptime(comp_dl, '%Y-%m-%d %H:%M')
+        
+        title = user_data[chat_id]['title']
+        description = user_data[chat_id]['description']
+        accept_dl = user_data[chat_id]['accept_deadline']
+        
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute('''
+            INSERT INTO tasks (title, description, accept_deadline, completion_deadline) 
+            VALUES (?, ?, ?, ?)
+        ''', (title, description, accept_dl, comp_dl))
+        conn.commit()
+        conn.close()
+
+        bot.reply_to(message, f"✅ Задача успешно добавлена!\n\n*{title}*\n{description}\n\n⏳ Принять до: {accept_dl}\n⏳ Выполнить до: {comp_dl}", parse_mode='Markdown')
+        user_data.pop(chat_id, None)
+    except ValueError:
+        msg = bot.reply_to(message, "Неверный формат даты. Пожалуйста, введите в формате ГГГГ-ММ-ДД ЧЧ:ММ (например: 2026-07-15 18:00):")
+        bot.register_next_step_handler(msg, process_completion_deadline_step)
 
 @bot.message_handler(commands=['list'])
 def list_tasks(message):
@@ -117,5 +209,5 @@ def process_delete_step(message):
     bot.reply_to(message, f"Задача с ID {task_id} успешно удалена.", parse_mode='Markdown')
 
 if __name__ == '__main__':
-    print("Бот запущен")
+    print("Бот запущен, процесс очистки активен...")
     bot.polling(none_stop=True)

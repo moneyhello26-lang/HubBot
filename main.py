@@ -2,6 +2,12 @@ from flask import Flask, request, render_template, redirect, session, send_from_
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
 
 app = Flask(__name__)
 app.secret_key = 'secret_key'
@@ -35,6 +41,21 @@ def taskmanager_db():
             linkedin_link TEXT
         )
     ''')
+    
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN priority TEXT DEFAULT 'Обычный'")
+    except sqlite3.OperationalError:
+        pass
+        
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN accept_deadline DATETIME")
+    except sqlite3.OperationalError:
+        pass
+
+    try:
+        cursor.execute("ALTER TABLE tasks ADD COLUMN completion_deadline DATETIME")
+    except sqlite3.OperationalError:
+        pass
 
     conn.commit()
     conn.close()
@@ -45,7 +66,7 @@ taskmanager_db()
 def home():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM tasks WHERE status = "Не выполнено" ORDER BY RANDOM() LIMIT 3')
+    cursor.execute('SELECT id, title, description, status, assignee, result_file, created_at, priority, accept_deadline, completion_deadline FROM tasks WHERE status = "Не выполнено" ORDER BY RANDOM() LIMIT 3')
     recommended_tasks = cursor.fetchall()
     conn.close()
     return render_template('home.html', recommended_tasks=recommended_tasks)
@@ -103,7 +124,7 @@ def tasks():
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM tasks ORDER BY created_at DESC')
+    cursor.execute('SELECT id, title, description, status, assignee, result_file, created_at, priority, accept_deadline, completion_deadline FROM tasks ORDER BY created_at DESC')
     tasks = cursor.fetchall()
     conn.close()
     return render_template('tasks.html', tasks=tasks)
@@ -118,11 +139,15 @@ def take_task(task_id):
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    cursor.execute('SELECT title FROM tasks WHERE id=?', (task_id,))
+    task = cursor.fetchone()
+    
     cursor.execute('''
         UPDATE tasks SET status='В процессе', assignee=? WHERE id=?
     ''', (username, task_id))
     conn.commit()
     conn.close()
+
 
     return redirect('/tasks')
 
@@ -140,6 +165,8 @@ def complete_task(task_id):
         result_file.save(os.path.join('data/uploads', filename))
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
+    cursor.execute('SELECT title FROM tasks WHERE id=?', (task_id,))
+    task = cursor.fetchone()
 
     if filename:
         cursor.execute('''
@@ -148,6 +175,7 @@ def complete_task(task_id):
 
     conn.commit()
     conn.close()
+
 
     return redirect('/tasks')
 
@@ -207,7 +235,7 @@ def profile(username):
         conn.close()
         return "Пользователь не найден", 404
 
-    cursor.execute('SELECT id, title, status FROM tasks WHERE assignee = ? ORDER BY created_at DESC', (username,))
+    cursor.execute('SELECT id, title, status, completion_deadline FROM tasks WHERE assignee = ? ORDER BY created_at DESC', (username,))
     user_tasks = cursor.fetchall()
     conn.close()
         

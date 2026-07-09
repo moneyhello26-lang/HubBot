@@ -1,61 +1,150 @@
 {% extends "base.html" %}
-
 {% block title %}Доска задач - HubBot{% endblock %}
-
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='tasks.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="dashboard">
-    <div class="sidebar">
-        <h2>Свежие задачи</h2>
-        {% for task in tasks %}
-            <div class="task-item" onclick="openTask('{{ task[0] }}')">
-                <div class="task-title">#{{ task[0] }} {{ task[1] }}</div>
-                <div class="task-status">Статус: {{ task[3] }}</div>
-            </div>
-        {% endfor %}
-    </div>
+<div class="container">
+    <div class="eyebrow">HubBot / Tasks</div>
+    <h1 class="page-title">Доска задач</h1>
+    <p class="page-desc">Дежурная диспетчерская. Берите тикеты в работу и отчитывайтесь по завершении.</p>
 
-    <div class="content">
-        <div id="placeholder" class="placeholder">
-            <h2>Выберите задачу из списка слева, чтобы увидеть подробности</h2>
+    <div class="dashboard mobile-hidden" id="dashboard">
+        <div class="sidebar">
+            <h2>Список тикетов</h2>
+            {% for task in tasks %}
+                {% set status_class = 'open' %}
+                {% if task[3] == 'В процессе' %}{% set status_class = 'brand' %}{% endif %}
+                {% if task[3] == 'Выполнено' %}{% set status_class = 'done' %}{% endif %}
+                
+                <div class="task-item status-{{ task[3].replace(' ', '_') }}" onclick="openTask('{{ task[0] }}')" id="item-{{ task[0] }}">
+                    <span class="task-id-mono">#{{ "%04d" | format(task[0]) }}</span>
+                    <h3 class="task-title">{{ task[1] }}</h3>
+                    <div class="task-meta-row">
+                        <span class="tag-status status-{{ status_class }}">{{ task[3] }}</span>
+                        <span class="tag-priority prio-normal">{{ task[7] if task|length > 7 and task[7] else 'Обычный' }}</span>
+                        {% if task[3] == 'Не выполнено' and task|length > 8 and task[8] %}
+                            <span class="task-deadline">Принять до: {{ task[8] }}</span>
+                        {% elif task[3] == 'В процессе' and task|length > 9 and task[9] %}
+                            <span class="task-deadline">Выполнить до: {{ task[9] }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
         </div>
 
-        {% for task in tasks %}
-            <div id="task-{{ task[0] }}" class="task-detail">
-                <h2>{{ task[1] }}</h2>
-                <hr>
-                <p><strong>Описание:</strong><br> {{ task[2] }}</p>
-                <p><strong>Статус:</strong> {{ task[3] }}</p>
-                
-                <!-- ВОТ ЭТА ЧАСТЬ ИЗМЕНИЛАСЬ: Добавлена ссылка на профиль работника -->
-                <p><strong>Исполнитель:</strong> 
-                    {% if task[4] %}
-                        <a href="/profile/{{ task[4] }}" style="color: #0052cc; text-decoration: none; font-weight: bold;">{{ task[4] }}</a>
-                    {% else %}
-                        Пока никто не взял
-                    {% endif %}
-                </p>
-                
-                {% if task[3] == 'Не выполнено' %}
-                    <div class="form-group">
-                        <form action="/take_task/{{ task[0] }}" method="POST">
-                            <button type="submit" class="btn">Взять в работу</button>
-                        </form>
-                    </div>
-                {% elif task[3] == 'В процессе' %}
-                    <div class="form-group">
-                        <form action="/complete_task/{{ task[0] }}" method="POST" enctype="multipart/form-data">
-                            <label>Прикрепить файл с результатом:</label><br><br>
-                            <input type="file" name="result_file" required><br><br>
-                            <button type="submit" class="btn">Завершить задачу</button>
-                        </form>
-                    </div>
-                {% endif %}
+        <div class="content">
+            <button class="mobile-back-btn" onclick="closeTask()">← К списку тикетов</button>
+            <div id="placeholder" class="placeholder">
+                Выберите тикет из списка слева, чтобы увидеть подробности
             </div>
-        {% endfor %}
+
+            {% for task in tasks %}
+                {% set status_class = 'open' %}
+                {% if task[3] == 'В процессе' %}{% set status_class = 'brand' %}{% endif %}
+                {% if task[3] == 'Выполнено' %}{% set status_class = 'done' %}{% endif %}
+                
+                <div id="task-{{ task[0] }}" class="task-detail">
+                    <div class="stamp-badge {{ status_class }}">{{ task[3] }}</div>
+                    
+                    <span class="detail-eyebrow">HUBBOT / TICKET #{{ "%04d" | format(task[0]) }}</span>
+                    <h2 class="detail-title">{{ task[1] }}</h2>
+                    
+                    <div class="detail-meta">
+                        <span class="tag-priority prio-normal">{{ task[7] if task|length > 7 and task[7] else 'Обычный' }}</span>
+                        {% if task[3] == 'Не выполнено' and task|length > 8 and task[8] %}
+                            <span class="tag-status status-open">Принять до: {{ task[8] }}</span>
+                        {% elif task[3] == 'В процессе' and task|length > 9 and task[9] %}
+                            <span class="tag-status status-brand">Выполнить до: {{ task[9] }}</span>
+                        {% endif %}
+                    </div>
+                    
+                    <span class="field-label">Описание задачи</span>
+                    <div class="detail-description">
+                        {{ task[2] }}
+                    </div>
+                    
+                    <span class="field-label">Участники</span>
+                    <div class="people-block">
+                        <div class="person">
+                            <div class="person-avatar">М</div>
+                            <div class="person-info">
+                                <span class="person-name">Руководитель</span>
+                                <span class="person-role">Постановщик</span>
+                            </div>
+                        </div>
+                        <div class="person">
+                            {% if task[4] %}
+                                {% if task[4] == session['username'] %}
+                                    <div class="person-avatar nav-avatar-gradient">{{ task[4][:2]|upper }}</div>
+                                {% else %}
+                                    <div class="person-avatar">{{ task[4][:2]|upper }}</div>
+                                {% endif %}
+                                <div class="person-info">
+                                    <a href="/profile/{{ task[4] }}" style="text-decoration: none; color: inherit;">
+                                        <span class="person-name">{{ task[4] }}</span>
+                                    </a>
+                                    <span class="person-role">Исполнитель</span>
+                                </div>
+                            {% else %}
+                                <div class="person-avatar">?</div>
+                                <div class="person-info">
+                                    <span class="person-name" style="color: var(--ink-faint)">Не назначен</span>
+                                    <span class="person-role">Ожидает исполнителя</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="divider"></div>
+                    
+                    <span class="field-label">Действия по тикету</span>
+                    {% if task[3] == 'Не выполнено' %}
+                        <div class="action-panel">
+                            <div class="action-text">
+                                Эта задача свободна. Нажмите кнопку, чтобы забрать этот тикет в работу. Вы станете единственным исполнителем.
+                            </div>
+                            <div class="action-form">
+                                <form action="/take_task/{{ task[0] }}" method="POST">
+                                    <button type="submit" class="btn-primary">Забрать тикет</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% elif task[3] == 'В процессе' and task[4] == session['username'] %}
+                        <div class="action-panel">
+                            <div class="action-text">
+                                Прикрепите файл с результатом — руководитель получит его в Telegram. После этого тикет будет закрыт.
+                            </div>
+                            <div class="action-form">
+                                <form action="/complete_task/{{ task[0] }}" method="POST" enctype="multipart/form-data" id="form-{{ task[0] }}">
+                                    <label class="btn-file" id="label-{{ task[0] }}">
+                                        <span id="label-text-{{ task[0] }}">Прикрепить файл</span>
+                                        <input type="file" name="result_file" id="file-{{ task[0] }}" required style="display: none;" onchange="updateFileName({{ task[0] }})">
+                                    </label>
+                                    <button type="submit" class="btn-primary">Завершить задачу</button>
+                                </form>
+                            </div>
+                        </div>
+                    {% elif task[3] == 'Выполнено' %}
+                        <div class="action-panel" style="justify-content: flex-start; gap: 16px;">
+                            <div class="action-text">
+                                Задача завершена.
+                            </div>
+                            {% if task[5] %}
+                                <div class="file-chip">📎 {{ task[5] }}</div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="action-panel">
+                            <div class="action-text">
+                                Этот тикет сейчас выполняет <strong>{{ task[4] }}</strong>.
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
     </div>
 </div>
 {% endblock %}

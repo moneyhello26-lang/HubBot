@@ -7,8 +7,11 @@
 {% endblock %}
 
 {% block content %}
-<div class="settings-container" style="margin-top: 40px;">
-    <h2>Настройки профиля</h2>
+<div class="settings-container">
+    <div style="margin-bottom: 32px;">
+        <span class="eyebrow">Employee Setup</span>
+        <h2 class="page-title" style="margin: 0;">Настройки профиля</h2>
+    </div>
     
     <div class="tabs">
         <button class="tab-link active" type="button" onclick="openTab(event, 'Personal')">Личные данные</button>
@@ -17,37 +20,59 @@
 
     <form action="/settings" method="POST" enctype="multipart/form-data">
         <div id="Personal" class="tab-content" style="display: block;">
-            <div class="form-group">
-                <label>Текущая аватарка:</label><br>
-                <img src="/avatar/{{ user[1] }}" alt="Аватар" class="avatar-preview" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0052cc&color=fff&size=80'">
-            </div>
             
-            <div class="form-group">
-                <label>Загрузить новую аватарку:</label>
-                <input type="file" name="avatar" accept="image/*">
+            <div style="display: flex; gap: 24px; align-items: flex-start; margin-bottom: 32px;">
+                <img src="/avatar/{{ user[1] }}" alt="Аватар" class="avatar-preview" onerror="this.src='https://ui-avatars.com/api/?name={{ session['username'] }}&background=0052cc&color=fff&size=80'">
+                
+                <div style="flex-grow: 1;">
+                    <span class="field-label">Фотография профиля</span>
+                    <div class="avatar-upload-zone">
+                        <div class="avatar-upload-text">
+                            Загрузите изображение для своего профиля. Рекомендуемый размер: 200x200px.
+                        </div>
+                        <label class="btn-file" id="avatar-label">
+                            <span id="avatar-label-text">Выбрать файл</span>
+                            <input type="file" name="avatar" accept="image/*" style="display: none;" onchange="updateAvatarName(this)">
+                        </label>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
-                <label>Обо мне:</label>
-                <textarea name="about_me" rows="4">{{ user[2] if user[2] else '' }}</textarea>
+                <span class="field-label">Обо мне</span>
+                <textarea name="about_me" rows="4" placeholder="Напишите несколько слов о себе и своих навыках...">{{ user[2] if user[2] else '' }}</textarea>
             </div>
         </div>
 
         <div id="Social" class="tab-content">
             <div class="form-group">
-                <label>Ссылка на GitHub:</label>
-                <input type="url" name="github_link" value="{{ user[3] if user[3] else '' }}">
+                <span class="field-label">Ссылка на GitHub</span>
+                <input type="url" name="github_link" value="{{ user[3] if user[3] else '' }}" placeholder="https://github.com/username">
             </div>
             
             <div class="form-group">
-                <label>Ссылка на LinkedIn:</label>
-                <input type="url" name="linkedin_link" value="{{ user[4] if user[4] else '' }}">
+                <span class="field-label">Ссылка на LinkedIn</span>
+                <input type="url" name="linkedin_link" value="{{ user[4] if user[4] else '' }}" placeholder="https://linkedin.com/in/username">
             </div>
         </div>
 
         <button type="submit" class="save-btn">Сохранить изменения</button>
     </form>
 </div>
+
+<script>
+function updateAvatarName(input) {
+    const label = document.getElementById('avatar-label');
+    const labelText = document.getElementById('avatar-label-text');
+    if (input.files && input.files.length > 0) {
+        if (labelText) {
+            labelText.textContent = '📎 ' + input.files[0].name;
+        }
+        label.classList.remove('btn-file');
+        label.classList.add('file-chip');
+    }
+}
+</script>
 {% endblock %}
 
 {% block scripts %}

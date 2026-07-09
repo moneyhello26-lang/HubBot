@@ -12,9 +12,9 @@
         <h1>Управляйте задачами<br> <span class="highlight">быстро и легко</span></h1>
         <p>Платформа для эффективного делегирования и контроля. Оставьте хаос позади.</p>
         {% if 'username' in session %}
-            <a href="/tasks" class="cta-button">Перейти к задачам</a>
+            <a href="/tasks" class="btn-primary" style="font-size: 16px; padding: 12px 24px;">Перейти к задачам</a>
         {% else %}
-            <a href="/register" class="cta-button">Начать бесплатно</a>
+            <a href="/register" class="btn-primary" style="font-size: 16px; padding: 12px 24px;">Начать бесплатно</a>
         {% endif %}
     </div>
 </header>
@@ -23,13 +23,21 @@
     <h2>Свободные задачи</h2>
     <div class="task-grid">
         {% for task in recommended_tasks %}
-            <div class="task-card">
-                <h3>#{{ task[0] }} {{ task[1] }}</h3>
-                <p>{{ task[2][:100] }}{% if task[2]|length > 100 %}...{% endif %}</p>
-                <a href="/tasks" class="btn-outline">Перейти к списку</a>
-            </div>
+            <a href="/tasks" class="mini-ticket">
+                <span class="mini-ticket-id">#{{ "%04d" | format(task[0]) }}</span>
+                <h3 class="mini-ticket-title">{{ task[1] }}</h3>
+                <p class="mini-ticket-desc">{{ task[2][:100] }}{% if task[2]|length > 100 %}...{% endif %}</p>
+                <div class="mini-ticket-meta">
+                    <span class="tag-status status-open">{{ task[3] }}</span>
+                    {% if task|length > 8 and task[8] %}
+                        <span class="tag-priority prio-normal" style="font-family: 'JetBrains Mono', monospace;">До: {{ task[8] }}</span>
+                    {% else %}
+                        <span class="tag-priority prio-normal">{{ task[7] if task|length > 7 and task[7] else 'Обычный' }}</span>
+                    {% endif %}
+                </div>
+            </a>
         {% else %}
-            <p style="text-align: center; color: #5e6c84; width: 100%;">Пока нет свободных задач. Все при деле!</p>
+            <p style="text-align: center; color: var(--ink-soft); width: 100%;">Пока нет свободных задач. Все при деле!</p>
         {% endfor %}
     </div>
 </section>

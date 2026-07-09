@@ -10,14 +10,22 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo"><a href="/" style="text-decoration: none; color: inherit;">HubBot</a></div>
+        <a href="/" class="logo-container">
+            <div class="brand-mark"><span>HB</span></div>
+            <div class="logo-text">HubBot</div>
+        </a>
         <div class="nav-links">
             {% if 'username' in session %}
                 <span class="user-greeting">Привет, {{ session['username'] }}!</span>
                 <a href="/tasks" class="btn-outline">Задачи</a>
                 
                 <div class="profile-dropdown">
-                    <img src="/avatar/{{ session.get('avatar_file', 'default.png') }}" alt="Аватар" class="nav-avatar" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0052cc&color=fff&size=40'">
+                    {% set avatar = session.get('avatar_file', 'default.png') %}
+                    {% if avatar == 'default.png' %}
+                        <div class="nav-avatar nav-avatar-gradient">{{ session['username'][:2]|upper }}</div>
+                    {% else %}
+                        <img src="/avatar/{{ avatar }}" alt="Аватар" class="nav-avatar" onerror="this.src='https://ui-avatars.com/api/?name={{ session['username'] }}&background=0052cc&color=fff&size=32'">
+                    {% endif %}
                     <div class="dropdown-content">
                         <a href="/profile/{{ session['username'] }}">Мой профиль</a>
                         <a href="/settings">Настройки</a>
