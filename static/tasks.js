@@ -2,36 +2,30 @@ function openTask(taskId) {
     const dashboard = document.getElementById('dashboard');
     const placeholder = document.getElementById('placeholder');
     
-    // Desktop: hide placeholder
     if (placeholder) {
         placeholder.style.display = 'none';
     }
     
-    // Hide all details
     const allDetails = document.querySelectorAll('.task-detail');
     allDetails.forEach(function(detail) {
         detail.style.display = 'none';
     });
     
-    // Remove active state from all items
     const allItems = document.querySelectorAll('.task-item');
     allItems.forEach(function(item) {
         item.classList.remove('active');
     });
     
-    // Show selected task
     const selectedTask = document.getElementById('task-' + taskId);
     if (selectedTask) {
         selectedTask.style.display = 'block';
     }
     
-    // Add active state to selected item
     const selectedItem = document.getElementById('item-' + taskId);
     if (selectedItem) {
         selectedItem.classList.add('active');
     }
     
-    // Mobile logic
     if (window.innerWidth <= 860) {
         dashboard.classList.remove('mobile-hidden');
         dashboard.classList.add('mobile-open');
