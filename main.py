@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, session
+from flask import Flask, request, render_template, redirect, session, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
@@ -45,10 +45,10 @@ taskmanager_db()
 def home():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM tasks')
-    tasks = cursor.fetchall()
+    cursor.execute('SELECT * FROM tasks WHERE status = "Не выполнено" ORDER BY RANDOM() LIMIT 3')
+    recommended_tasks = cursor.fetchall()
     conn.close()
-    return render_template('home.html', tasks=tasks)
+    return render_template('home.html', recommended_tasks=recommended_tasks)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -79,13 +79,14 @@ def login():
 
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute('SELECT id, password_hash FROM users WHERE username = ?', (username,))
+        cursor.execute('SELECT id, password_hash, avatar_file FROM users WHERE username = ?', (username,))
         user = cursor.fetchone()
         conn.close()
 
         if user and check_password_hash(user[1], password):
             session['user_id'] = user[0]
             session['username'] = username
+            session['avatar_file'] = user[2]
             return redirect('/')
         
     return render_template('login.html', error="Неверное имя пользователя или пароль.")
@@ -133,10 +134,10 @@ def complete_task(task_id):
     result_file = request.files.get('result_file')
     filename = None
     if result_file and result_file.filename != '':
-        os.makedirs('app/uploads', exist_ok=True)
+        os.makedirs('data/uploads', exist_ok=True)
         from werkzeug.utils import secure_filename
         filename = f"{task_id}-{secure_filename(result_file.filename)}" 
-        result_file.save(os.path.join('app/uploads', filename))
+        result_file.save(os.path.join('data/uploads', filename))
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -168,17 +169,18 @@ def settings():
         avatar_filename = None
         
         if avatar and avatar.filename != '':
-            os.makedirs('static/avatars', exist_ok=True)
+            os.makedirs('data/avatars', exist_ok=True)
             from werkzeug.utils import secure_filename
             filename = secure_filename(avatar.filename)
             avatar_filename = f"user_{user_id}_{filename}"
-            avatar.save(os.path.join('static/avatars', avatar_filename))
+            avatar.save(os.path.join('data/avatars', avatar_filename))
 
         if avatar_filename:
             cursor.execute('''
                 UPDATE users SET about_me=?, github_link=?, linkedin_link=?, avatar_file=?
                 WHERE id=?
             ''', (about_me, github_link, linkedin_link, avatar_filename, user_id))
+            session['avatar_file'] = avatar_filename
         else:
             cursor.execute('''
                 UPDATE users SET about_me=?, github_link=?, linkedin_link=?
@@ -193,5 +195,30 @@ def settings():
     user_data = cursor.fetchone()
     conn.close()
     return render_template('settings.html', user=user_data)
+
+@app.route('/profile/<username>')
+def profile(username):
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
+    profile_user = cursor.fetchone()
+    
+    if not profile_user:
+        conn.close()
+        return "Пользователь не найден", 404
+
+    cursor.execute('SELECT id, title, status FROM tasks WHERE assignee = ? ORDER BY created_at DESC', (username,))
+    user_tasks = cursor.fetchall()
+    conn.close()
+        
+    return render_template('public_profile.html', profile_user=profile_user, user_tasks=user_tasks)
+
+@app.route('/avatar/<filename>')
+def get_avatar(filename):
+    return send_from_directory('data/avatars', filename)
+
+@app.route('/uploads/<filename>')
+def get_upload(filename):
+    return send_from_directory('data/uploads', filename)
 
 app.run(debug=True, host="0.0.0.0", port=5000)

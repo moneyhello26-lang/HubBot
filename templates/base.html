@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}HubBot{% endblock %}</title>
+    <!-- Подключаем базовые стили (сброс, шрифты, меню) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='base.css') }}">
+    <!-- Подключаем стили для конкретной страницы -->
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo"><a href="/" style="text-decoration: none; color: inherit;">HubBot</a></div>
+        <div class="nav-links">
+            {% if 'username' in session %}
+                <span class="user-greeting">Привет, {{ session['username'] }}!</span>
+                <a href="/tasks" class="btn-outline">Задачи</a>
+                
+                <div class="profile-dropdown">
+                    <img src="/avatar/{{ session.get('avatar_file', 'default.png') }}" alt="Аватар" class="nav-avatar" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0052cc&color=fff&size=40'">
+                    <div class="dropdown-content">
+                        <a href="/profile/{{ session['username'] }}">Мой профиль</a>
+                        <a href="/settings">Настройки</a>
+                        <a href="/logout" class="text-danger">Выйти</a>
+                    </div>
+                </div>
+            {% else %}
+                <a href="/login" class="btn-outline">Вход</a>
+                <a href="/register" class="btn-primary">Регистрация</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

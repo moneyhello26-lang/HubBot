@@ -100,3 +100,63 @@ h1 {
     background: #0047b3;
 }
 .hero-bg-glow { display: none; }
+
+.recommended-tasks {
+    max-width: 1000px;
+    margin: 60px auto;
+    padding: 0 20px;
+}
+
+.recommended-tasks h2 {
+    color: #172b4d;
+    margin-bottom: 32px;
+    text-align: center;
+}
+
+.task-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.task-card {
+    background: #ffffff;
+    border: 1px solid #dfe1e6;
+    border-radius: 3px;
+    padding: 24px;
+    width: 280px;
+    box-shadow: 0 1px 1px rgba(9,30,66,0.25);
+    display: flex;
+    flex-direction: column;
+}
+
+.task-card h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+    color: #172b4d;
+    font-size: 16px;
+}
+
+.task-card p {
+    color: #5e6c84;
+    font-size: 14px;
+    line-height: 1.5;
+    flex-grow: 1;
+    margin-bottom: 24px;
+}
+
+.task-card .btn-outline {
+    text-align: center;
+    padding: 8px 16px;
+    text-decoration: none;
+    border-radius: 3px;
+    background: #f4f5f7;
+    color: #42526e;
+    font-weight: 500;
+    display: block;
+}
+
+.task-card .btn-outline:hover {
+    background: #ebecf0;
+}

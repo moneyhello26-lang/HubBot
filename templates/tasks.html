@@ -1,12 +1,12 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Доска задач</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='tasks.css') }}">
-</head>
-<body>
+{% extends "base.html" %}
 
+{% block title %}Доска задач - HubBot{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='tasks.css') }}">
+{% endblock %}
+
+{% block content %}
 <div class="dashboard">
     <div class="sidebar">
         <h2>Свежие задачи</h2>
@@ -29,7 +29,15 @@
                 <hr>
                 <p><strong>Описание:</strong><br> {{ task[2] }}</p>
                 <p><strong>Статус:</strong> {{ task[3] }}</p>
-                <p><strong>Исполнитель:</strong> {{ task[4] if task[4] else 'Пока никто не взял' }}</p>
+                
+                <!-- ВОТ ЭТА ЧАСТЬ ИЗМЕНИЛАСЬ: Добавлена ссылка на профиль работника -->
+                <p><strong>Исполнитель:</strong> 
+                    {% if task[4] %}
+                        <a href="/profile/{{ task[4] }}" style="color: #0052cc; text-decoration: none; font-weight: bold;">{{ task[4] }}</a>
+                    {% else %}
+                        Пока никто не взял
+                    {% endif %}
+                </p>
                 
                 {% if task[3] == 'Не выполнено' %}
                     <div class="form-group">
@@ -50,8 +58,8 @@
         {% endfor %}
     </div>
 </div>
+{% endblock %}
 
+{% block scripts %}
 <script src="{{ url_for('static', filename='tasks.js') }}"></script>
-
-</body>
-</html>
+{% endblock %}

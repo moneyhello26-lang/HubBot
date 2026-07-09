@@ -1,38 +1,37 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <title>Вход - HubBot</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
-</head>
-<body>
-    <div class="auth-container">
-        <div class="auth-box">
-            <div class="logo">HubBot</div>
-            <h2>С возвращением</h2>
-            <p class="subtitle">Войдите в свой аккаунт, чтобы продолжить</p>
+{% extends "base.html" %}
 
-            {% if error %}
-                <div class="error-msg">{{ error }}</div>
-            {% endif %}
+{% block title %}Вход - HubBot{% endblock %}
 
-            <form action="/login" method="POST">
-                <div class="input-group">
-                    <label>Имя пользователя</label>
-                    <input type="text" name="username" required placeholder="Введите логин">
-                </div>
-                
-                <div class="input-group">
-                    <label>Пароль</label>
-                    <input type="password" name="password" required placeholder="Введите пароль">
-                </div>
-                
-                <button type="submit" class="auth-btn">Войти</button>
-            </form>
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="margin: 80px auto;">
+    <div class="auth-box">
+        <div class="logo">HubBot</div>
+        <h2>С возвращением</h2>
+        <p class="subtitle">Войдите в свой аккаунт, чтобы продолжить</p>
+
+        {% if error %}
+            <div class="error-msg">{{ error }}</div>
+        {% endif %}
+
+        <form action="/login" method="POST">
+            <div class="input-group">
+                <label>Имя пользователя</label>
+                <input type="text" name="username" required>
+            </div>
             
-            <p class="switch-auth">Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
-        </div>
+            <div class="input-group">
+                <label>Пароль</label>
+                <input type="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="auth-btn">Войти</button>
+        </form>
+        
+        <p class="switch-auth">Нет аккаунта? <a href="/register">Зарегистрироваться</a></p>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль {{ profile_user[1] }} - HubBot{% endblock %}
+
+{% block styles %}
+<style>
+.profile-container {
+    max-width: 600px;
+    margin: 40px auto;
+    background: #ffffff;
+    padding: 32px;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #dfe1e6;
+    text-align: center;
+}
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #dfe1e6;
+    margin-bottom: 16px;
+}
+.profile-name {
+    font-size: 24px;
+    color: #172b4d;
+    margin: 0 0 8px 0;
+}
+.profile-about {
+    font-size: 14px;
+    color: #5e6c84;
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+.profile-links {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+.profile-links a {
+    text-decoration: none;
+    color: #0052cc;
+    font-weight: 500;
+}
+.profile-links a:hover {
+    text-decoration: underline;
+}
+.profile-empty {
+    color: #97a0af;
+    font-style: italic;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <img src="/avatar/{{ profile_user[3] }}" alt="Аватар" class="profile-avatar" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0052cc&color=fff&size=120'">
+    
+    <h2 class="profile-name">{{ profile_user[1] }}</h2>
+    
+    {% if profile_user[4] %}
+        <p class="profile-about">{{ profile_user[4] }}</p>
+    {% else %}
+        <p class="profile-about profile-empty">Пользователь пока ничего не рассказал о себе.</p>
+    {% endif %}
+
+    <div class="profile-links">
+        {% if profile_user[5] %}
+            <a href="{{ profile_user[5] }}" target="_blank">GitHub</a>
+        {% endif %}
+        {% if profile_user[6] %}
+            <a href="{{ profile_user[6] }}" target="_blank">LinkedIn</a>
+        {% endif %}
+    </div>
+
+    <div class="profile-tasks" style="margin-top: 40px; text-align: left;">
+        <h3 style="color: #172b4d; border-bottom: 1px solid #dfe1e6; padding-bottom: 8px;">Задачи сотрудника</h3>
+        {% if user_tasks %}
+            <ul style="list-style: none; padding: 0;">
+            {% for task in user_tasks %}
+                <li style="padding: 12px; border: 1px solid #dfe1e6; margin-bottom: 8px; border-radius: 3px; background: #fafbfc;">
+                    <strong>#{{ task[0] }} {{ task[1] }}</strong>
+                    <span style="float: right; font-size: 12px; padding: 4px 8px; border-radius: 12px; 
+                        {% if task[2] == 'Выполнено' %}background: #e3fcef; color: #006644;
+                        {% else %}background: #deebff; color: #0052cc;{% endif %}">
+                        {{ task[2] }}
+                    </span>
+                </li>
+            {% endfor %}
+            </ul>
+        {% else %}
+            <p style="color: #5e6c84; font-size: 14px;">Пока нет взятых или выполненных задач.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
