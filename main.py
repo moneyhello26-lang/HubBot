@@ -66,9 +66,30 @@ taskmanager_db()
 def home():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('SELECT id, title, description, status, assignee, result_file, created_at, priority, accept_deadline, completion_deadline FROM tasks WHERE status = "Не выполнено" ORDER BY RANDOM() LIMIT 3')
-    recommended_tasks = cursor.fetchall()
+    cursor.execute("SELECT id, title, description, status, assignee, result_file, created_at, priority, accept_deadline FROM tasks WHERE status = 'Не выполнено' ORDER BY created_at DESC")
+    all_free_tasks = cursor.fetchall()
     conn.close()
+    
+    # Отфильтровываем просроченные
+    recommended_tasks = []
+    from datetime import datetime
+    now = datetime.now()
+    for task in all_free_tasks:
+        accept_dl = task[8] if len(task) > 8 else None
+        if accept_dl:
+            try:
+                dt = datetime.strptime(accept_dl, '%Y-%m-%d %H:%M')
+                if now > dt:
+                    continue
+            except ValueError:
+                pass
+        recommended_tasks.append(task)
+        
+    import random
+    if recommended_tasks:
+        if len(recommended_tasks) >= 3:
+            recommended_tasks = random.sample(recommended_tasks, 3)
+    
     return render_template('home.html', recommended_tasks=recommended_tasks)
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -125,9 +146,37 @@ def tasks():
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute('SELECT id, title, description, status, assignee, result_file, created_at, priority, accept_deadline, completion_deadline FROM tasks ORDER BY created_at DESC')
-    tasks = cursor.fetchall()
+    all_tasks = cursor.fetchall()
     conn.close()
-    return render_template('tasks.html', tasks=tasks)
+    
+    valid_tasks = []
+    from datetime import datetime
+    now = datetime.now()
+    for task in all_tasks:
+        status = task[3]
+        accept_dl = task[8] if len(task) > 8 else None
+        comp_dl = task[9] if len(task) > 9 else None
+        
+        is_expired = False
+        if status == 'Не выполнено' and accept_dl:
+            try:
+                dt = datetime.strptime(accept_dl, '%Y-%m-%d %H:%M')
+                if now > dt:
+                    is_expired = True
+            except ValueError:
+                pass
+        elif status == 'В процессе' and comp_dl:
+            try:
+                dt = datetime.strptime(comp_dl, '%Y-%m-%d %H:%M')
+                if now > dt:
+                    is_expired = True
+            except ValueError:
+                pass
+                
+        if not is_expired:
+            valid_tasks.append(task)
+            
+    return render_template('tasks.html', tasks=valid_tasks)
 
 @app.route('/take_task/<int:task_id>', methods=['POST'])
 def take_task(task_id):
@@ -139,9 +188,24 @@ def take_task(task_id):
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('SELECT title FROM tasks WHERE id=?', (task_id,))
+    cursor.execute('SELECT title, accept_deadline FROM tasks WHERE id=?', (task_id,))
     task = cursor.fetchone()
-    
+    if not task:
+        conn.close()
+        return redirect('/tasks')
+
+    if task[1]:
+        from datetime import datetime
+        try:
+            dt = datetime.strptime(task[1], '%Y-%m-%d %H:%M')
+            if datetime.now() > dt:
+                conn.close()
+                return "Ошибка: Срок принятия этой задачи уже истек.", 400
+        except ValueError:
+            pass
+            
+
+
     cursor.execute('''
         UPDATE tasks SET status='В процессе', assignee=? WHERE id=?
     ''', (username, task_id))
@@ -165,8 +229,22 @@ def complete_task(task_id):
         result_file.save(os.path.join('data/uploads', filename))
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute('SELECT title FROM tasks WHERE id=?', (task_id,))
+    cursor.execute('SELECT title, completion_deadline FROM tasks WHERE id=?', (task_id,))
     task = cursor.fetchone()
+    if not task:
+        conn.close()
+        return redirect('/tasks')
+
+    if task[1]:
+        from datetime import datetime
+        try:
+            dt = datetime.strptime(task[1], '%Y-%m-%d %H:%M')
+            if datetime.now() > dt:
+                conn.close()
+                return "Ошибка: Срок выполнения этой задачи уже истек.", 400
+        except ValueError:
+            pass
+
 
     if filename:
         cursor.execute('''

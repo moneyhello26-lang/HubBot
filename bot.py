@@ -76,8 +76,11 @@ def task_cleaner_thread():
             print(f"Cleaner thread error: {e}")
             
         time.sleep(60)
+
 cleaner = threading.Thread(target=task_cleaner_thread, daemon=True)
 cleaner.start()
+
+
 
 
 @bot.message_handler(commands=['start'])
