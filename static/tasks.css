@@ -46,6 +46,7 @@
 
 .task-item.status-В_процессе::before { background: var(--brand); }
 .task-item.status-Выполнено::before { background: var(--done); }
+.task-item.status-Просрочено::before { background: var(--urgent); }
 
 .task-item:hover {
     box-shadow: 0 1px 2px rgba(23,43,77,0.16);

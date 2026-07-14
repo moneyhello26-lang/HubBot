@@ -221,6 +221,7 @@ body {
 .status-open { background: var(--open-tint); color: var(--open); }
 .status-brand { background: var(--brand-tint); color: var(--brand); }
 .status-done { background: var(--done-tint); color: var(--done); }
+.status-expired { background: var(--urgent-tint); color: var(--urgent); }
 
 .prio-urgent { background: var(--urgent-tint); color: var(--urgent); }
 .prio-high { background: var(--high-tint); color: var(--high); }

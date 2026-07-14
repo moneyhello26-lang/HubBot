@@ -17,6 +17,7 @@
                 {% set status_class = 'open' %}
                 {% if task[3] == 'В процессе' %}{% set status_class = 'brand' %}{% endif %}
                 {% if task[3] == 'Выполнено' %}{% set status_class = 'done' %}{% endif %}
+                {% if task[3] == 'Просрочено' %}{% set status_class = 'expired' %}{% endif %}
                 
                 <div class="task-item status-{{ task[3].replace(' ', '_') }}" onclick="openTask('{{ task[0] }}')" id="item-{{ task[0] }}">
                     <span class="task-id-mono">#{{ "%04d" | format(task[0]) }}</span>

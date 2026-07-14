@@ -60,13 +60,13 @@ def task_cleaner_thread():
                         pass
                         
             for t_id, title, dl_type in expired_ids:
-                cursor.execute('DELETE FROM tasks WHERE id = ?', (t_id,))
-                print(f"Deleted task #{t_id} (expired {dl_type} deadline)")
+                cursor.execute("UPDATE tasks SET status = 'Просрочено' WHERE id = ?", (t_id,))
+                print(f"Task #{t_id} marked as expired (expired {dl_type} deadline)")
                 
                 chat_id = get_manager_chat_id()
                 if chat_id:
                     try:
-                        bot.send_message(chat_id, f"🗑 Задача #{t_id} «{title}» была автоматически удалена (просрочен дедлайн на {dl_type}).")
+                        bot.send_message(chat_id, f"⚠️ Задача #{t_id} «{title}» перешла в статус 'Просрочено' (дедлайн на {dl_type}).")
                     except Exception as e:
                         print(f"Failed to send notification: {e}")
             
